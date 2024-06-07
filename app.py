@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 import pickle
 import boto3
+import os
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -53,11 +54,16 @@ model_pm2_5_s3_key = 'assets/model_pm2_5.pkl.gz'
 model_pm10_s3_key = 'assets/model_pm10.pkl.gz'
 
 # Define the local paths for the models
-model_pm2_5_path = 'model_pm2_5.pkl.gz'
-model_pm10_path = 'model_pm10.pkl.gz'
+current_dir = os.path.dirname(__file__)
+compressed_file_path_pm2_5 = os.path.join(current_dir, 'assets', 'model_pm2_5.pkl.gz')
+compressed_file_path_pm10 = os.path.join(current_dir, 'assets', 'model_pm10.pkl.gz')
 
-# Ensure the directory exists
-os.makedirs('assets', exist_ok=True)
+
+model_pm2_5_path = compressed_file_path_pm2_5
+model_pm10_path = compressed_file_path_pm10
+
+# # Ensure the directory exists
+# os.makedirs('assets', exist_ok=True)
 
 # Download the models from S3
 download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, model_pm2_5_path)
