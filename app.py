@@ -55,8 +55,8 @@ model_pm10_s3_key = 'assets/model_pm10.pkl.gz'
 
 # Define the local paths for the models
 current_dir = os.path.dirname(__file__)
-compressed_file_path_pm2_5 = os.path.join(current_dir, 'assets', 'model_pm2_5.pkl.gz')
-compressed_file_path_pm10 = os.path.join(current_dir, 'assets', 'model_pm10.pkl.gz')
+compressed_file_path_pm2_5 = os.path.join(current_dir, 'model_pm2_5.pkl.gz')
+compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl.gz')
 
 
 model_pm2_5_path = compressed_file_path_pm2_5
