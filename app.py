@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import pickle
 import boto3
 import os
+from pycaret.regression import *
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -42,21 +43,24 @@ def decompress_pickle_gzip(file_path):
         return pickle.load(f)
 
 def download_file_from_s3(bucket_name, object_key, local_file_path):
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=aws_access_key_id,
-                             aws_secret_access_key=aws_secret_access_key)
-    print(f"Downloading {object_key} from bucket {bucket_name} to {local_file_path}")
-    s3_client.download_file(bucket_name, object_key, local_file_path)
-    print(f"Download complete: {local_file_path}")
+    if not os.path.exists(local_file_path):
+        s3_client = boto3.client('s3',
+                                 aws_access_key_id=aws_access_key_id,
+                                 aws_secret_access_key=aws_secret_access_key)
+        print(f"Downloading {object_key} from bucket {bucket_name} to {local_file_path}")
+        s3_client.download_file(bucket_name, object_key, local_file_path)
+        print(f"Download complete: {local_file_path}")
+    else:
+        print(f"File {local_file_path} already exists. Skipping download.")
 
 # Define the paths for the models in S3
-model_pm2_5_s3_key = 'assets/model_pm2_5.pkl.gz'
-model_pm10_s3_key = 'assets/model_pm10.pkl.gz'
+model_pm2_5_s3_key = 'assets/correction_factor_random_forest_sensor960-pm2_5-28-May-2024.pkl'
+model_pm10_s3_key = 'assets/correction_factor_random_forest_sensor960-pm10-28-May-2024.pkl'
 
 # Define the local paths for the models
 current_dir = os.path.dirname(__file__)
-compressed_file_path_pm2_5 = os.path.join(current_dir, 'model_pm2_5.pkl.gz')
-compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl.gz')
+compressed_file_path_pm2_5 = os.path.join(current_dir, 'model_pm2_5.pkl')
+compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl')
 
 
 model_pm2_5_path = compressed_file_path_pm2_5
@@ -69,12 +73,15 @@ model_pm10_path = compressed_file_path_pm10
 download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, model_pm2_5_path)
 download_file_from_s3(s3_bucket_name, model_pm10_s3_key, model_pm10_path)
 
-# Load the models
-model_pm2_5 = decompress_pickle_gzip(model_pm2_5_path)
-model_pm2_5 = joblib.load(model_pm2_5)
+# # Load the models
+# model_pm2_5 = decompress_pickle_gzip(model_pm2_5_path)
+# model_pm2_5 = joblib.load(model_pm2_5)
 
-model_pm10 = decompress_pickle_gzip(model_pm10_path)
-model_pm10 = joblib.load(model_pm10)
+# model_pm10 = decompress_pickle_gzip(model_pm10_path)
+# model_pm10 = joblib.load(model_pm10)
+
+model_pm2_5 = load_model('model_pm2_5')
+model_pm10 = load_model('model_pm10')
 
 @app.route('/')
 def index():
@@ -125,5 +132,5 @@ def predict_datapoints():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
-# if __name__ == "__main__":
-#    app.run(host="0.0.0.0", port=8080, debug=False)
+if __name__ == "__main__":
+   app.run(host="0.0.0.0", port=8080, debug=False)
