@@ -55,23 +55,23 @@ def download_file_from_s3(bucket_name, object_key, local_file_path):
 
 # Define the paths for the models in S3
 model_pm2_5_s3_key = 'assets/correction_factor_random_forest_sensor960-pm2_5-28-May-2024.pkl'
-# model_pm10_s3_key = 'assets/correction_factor_random_forest_sensor960-pm10-28-May-2024.pkl'
+model_pm10_s3_key = 'assets/correction_factor_random_forest_sensor960-pm10-28-May-2024.pkl'
 
 # Define the local paths for the models
 current_dir = os.path.dirname(__file__)
 compressed_file_path_pm2_5 = os.path.join(current_dir, 'model_pm2_5.pkl')
-# compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl')
+compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl')
 
 
 model_pm2_5_path = compressed_file_path_pm2_5
-# model_pm10_path = compressed_file_path_pm10
+model_pm10_path = compressed_file_path_pm10
 
 # # Ensure the directory exists
 # os.makedirs('assets', exist_ok=True)
 
 # Download the models from S3
 download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, model_pm2_5_path)
-# download_file_from_s3(s3_bucket_name, model_pm10_s3_key, model_pm10_path)
+download_file_from_s3(s3_bucket_name, model_pm10_s3_key, model_pm10_path)
 
 # # Load the models
 # model_pm2_5 = decompress_pickle_gzip(model_pm2_5_path)
@@ -81,7 +81,7 @@ download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, model_pm2_5_path)
 # model_pm10 = joblib.load(model_pm10)
 
 model_pm2_5 = load_model('model_pm2_5')
-# model_pm10 = load_model('model_pm10')
+model_pm10 = load_model('model_pm10')
 
 @app.route('/')
 def index():
@@ -109,7 +109,7 @@ def predict_datapoints():
             return jsonify({'error': 'Unsupported JSON format'}), 400
 
         # Ensure required columns are present
-        required_columns = ['hum', 'temp', 'pm2_5']
+        required_columns = ['hum', 'temp', 'pm2_5', 'pm10']
         for col in required_columns:
             if col not in json_to_df.columns:
                 return jsonify({'error': f'Missing column: {col}'}), 400
@@ -120,21 +120,17 @@ def predict_datapoints():
         predictions_df_pm2_5 = pd.DataFrame(predictions_array_pm2_5, columns=['pm2_5'], index=json_to_df.index)
 
         filtered_df_pm10 = json_to_df[['hum', 'temp', 'pm10']]
-        # predictions_array_pm10 = model_pm10.predict(filtered_df_pm10)
-        # predictions_df_pm10 = pd.DataFrame(predictions_array_pm10, columns=['pm10'], index=json_to_df.index)
+        predictions_array_pm10 = model_pm10.predict(filtered_df_pm10)
+        predictions_df_pm10 = pd.DataFrame(predictions_array_pm10, columns=['pm10'], index=json_to_df.index)
 
-        # json_to_df_dropped_pm2_5_pm10 = json_to_df.drop(columns=["pm2_5", "pm10"])
+        json_to_df_dropped_pm2_5_pm10 = json_to_df.drop(columns=["pm2_5", "pm10"])
 
-        json_to_df_dropped_pm2_5_pm10 = json_to_df.drop(columns=["pm2_5"])
-
-        # combined_df = pd.concat([predictions_df_pm2_5, predictions_df_pm10, json_to_df_dropped_pm2_5_pm10], axis=1)
-        combined_df = pd.concat([predictions_df_pm2_5, json_to_df_dropped_pm2_5_pm10], axis=1)
-
+        combined_df = pd.concat([predictions_df_pm2_5, predictions_df_pm10, json_to_df_dropped_pm2_5_pm10], axis=1)
 
         return combined_df.to_json(orient='records')
 
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
-# if __name__ == "__main__":
-#    app.run(host="0.0.0.0", port=8080, debug=False)
+if __name__ == "__main__":
+   app.run(host="0.0.0.0", port=8080, debug=False)
