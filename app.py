@@ -29,8 +29,8 @@ if not user_singh or not user_adams or not aws_access_key_id or not aws_secret_a
 
 # Dummy user data for demonstration
 users = {
-    "Singh": 'RR253675212LU',
-    "Adams": 'Ad@m$05@080W)+]:'
+    "Singh": user_singh,
+    "Adams": user_adams
 }
 
 @auth.verify_password
