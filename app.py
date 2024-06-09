@@ -27,7 +27,7 @@ s3_bucket_name = os.getenv('S3_BUCKET_NAME')
 if not user_singh or not user_adams or not aws_access_key_id or not aws_secret_access_key or not s3_bucket_name:
     raise EnvironmentError("Required environment variables are not set.")
 
-# Dummy user data for demonstration
+# user data for demonstration
 users = {
     "Singh": user_singh,
     "Adams": user_adams
