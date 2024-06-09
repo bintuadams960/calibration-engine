@@ -3,7 +3,6 @@ import pandas as pd
 import joblib
 import gzip
 from flask_httpauth import HTTPBasicAuth
-import os
 from dotenv import load_dotenv
 import pickle
 import boto3
