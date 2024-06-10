@@ -1,13 +1,10 @@
 from flask import Flask, request, jsonify
-import pandas as pd
-import joblib
-import gzip
 from flask_httpauth import HTTPBasicAuth
+from pycaret.regression import load_model
 from dotenv import load_dotenv
-import pickle
+import pandas as pd
 import boto3
 import os
-from pycaret.regression import load_model
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -36,10 +33,6 @@ users = {
 def verify_password(username, password):
     if username in users and users[username] == password:
         return username
-
-def decompress_pickle_gzip(file_path):
-    with gzip.open(file_path, 'rb') as f:
-        return pickle.load(f)
 
 def download_file_from_s3(bucket_name, object_key, local_file_path):
     if not os.path.exists(local_file_path):
