@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import pickle
 import boto3
 import os
-from pycaret.regression import *
+from pycaret.regression import load_model
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -26,7 +26,7 @@ s3_bucket_name = os.getenv('S3_BUCKET_NAME')
 if not user_singh or not user_adams or not aws_access_key_id or not aws_secret_access_key or not s3_bucket_name:
     raise EnvironmentError("Required environment variables are not set.")
 
-# user data for demonstration
+# user data 
 users = {
     "Singh": user_singh,
     "Adams": user_adams
@@ -61,24 +61,14 @@ current_dir = os.path.dirname(__file__)
 compressed_file_path_pm2_5 = os.path.join(current_dir, 'model_pm2_5.pkl')
 compressed_file_path_pm10 = os.path.join(current_dir, 'model_pm10.pkl')
 
+# Ensure the directory exists
+os.makedirs(current_dir, exist_ok=True)
 
-model_pm2_5_path = compressed_file_path_pm2_5
-model_pm10_path = compressed_file_path_pm10
+# Download the models from S3 if they do not already exist locally
+download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, compressed_file_path_pm2_5)
+download_file_from_s3(s3_bucket_name, model_pm10_s3_key, compressed_file_path_pm10)
 
-# # Ensure the directory exists
-# os.makedirs('assets', exist_ok=True)
-
-# Download the models from S3
-download_file_from_s3(s3_bucket_name, model_pm2_5_s3_key, model_pm2_5_path)
-download_file_from_s3(s3_bucket_name, model_pm10_s3_key, model_pm10_path)
-
-# # Load the models
-# model_pm2_5 = decompress_pickle_gzip(model_pm2_5_path)
-# model_pm2_5 = joblib.load(model_pm2_5)
-
-# model_pm10 = decompress_pickle_gzip(model_pm10_path)
-# model_pm10 = joblib.load(model_pm10)
-
+# Load the models
 model_pm2_5 = load_model('model_pm2_5')
 model_pm10 = load_model('model_pm10')
 
@@ -131,5 +121,5 @@ def predict_datapoints():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
-# if __name__ == "__main__":
-#    app.run(host="0.0.0.0", port=8080, debug=False)
+if __name__ == "__main__":
+   app.run(host="0.0.0.0", port=8080, debug=False)
